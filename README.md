@@ -15,19 +15,19 @@ Research and educational prototype for binary glaucoma screening from retinal fu
 | **Training Hardware Target** | Local **NVIDIA GeForce RTX 4060 (8 GB GDDR6)** with Tensor Cores (`TF32` / `AMP FP16`) |
 | **Inference Hardware Target** | Local **x86_64 CPU** (e.g., Intel Core i7-13650HX), `model.eval()`, `torch.no_grad()`, $\text{batch\_size} = 1$ |
 | **Inference Surface** | **FastAPI + Uvicorn** REST API & zero-build static HTML5/JS Local Dashboard + **Headless CLI** (*No Streamlit*) |
-| **Agentic Orchestration** | **Everything Claude Code (ECC) v2.2.3** + **Antigravity (`.agents/`)** |
+| **Explainability** | **Grad-CAM (`model.layer4[-1]`)** + Bilinear Heatmap Overlay |
 
 ---
 
 ## 2. Documentation Index (`docs/`)
 
-All project governance and architectural specifications reside in `docs/`. Per repository governance, `.agents/rules/` remains untouched by project documentation.
+All project governance and architectural specifications reside in `docs/`:
 
-1. [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) — Canonical specification, transcript synthesis, hard constraints, two-phase training schedule, and phase gates.
+1. [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) — Canonical specification, hard constraints, two-phase training schedule, and phase gates.
 2. [`docs/architecture.md`](docs/architecture.md) — System data flow, FastAPI & CLI inference surfaces, module boundaries, JSON/Pydantic contracts, and in-memory PHI lifecycle.
 3. [`docs/dataset_protocol.md`](docs/dataset_protocol.md) — REFUGE acquisition, Phase 2 manifest verification gate, `ungradable` exclusion rules, and patient-ID leakage disclosure.
 4. [`docs/evaluation_protocol.md`](docs/evaluation_protocol.md) — Statistical evaluation metrics, Youden's $J$ threshold freezing, $1,000$-resample bootstrap $95\%$ CIs, and TP/FP/TN/FN Grad-CAM error analysis.
-5. [`docs/ecc_antigravity_orchestration.md`](docs/ecc_antigravity_orchestration.md) — Exact mapping of `.agents/` autonomous agents, skills, and slash-command workflows, plus copy-paste kickoff prompts for Phases 0–6.
+5. [`docs/CODEMAPS/`](docs/CODEMAPS/) — Token-lean architecture, backend services, data pipeline, and dependency codemaps.
 6. [`docs/rejected_patterns.md`](docs/rejected_patterns.md) — Explicit architectural anti-patterns and forbidden constructs (including the ban on Streamlit, ResNet-50, and uncalibrated probability claims).
 
 ---
@@ -56,13 +56,6 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 ```bash
 pip install -r requirements.txt
 ```
-
-### 3.4 ECC & Antigravity Verification
-```bash
-npx ecc-universal@2.2.3 install --profile minimal --target antigravity
-npx ecc-universal@2.2.3 consult "PyTorch ResNet-18 image classification FastAPI Python testing CPU inference" --target antigravity
-```
-Verify in **Antigravity -> Settings -> Customizations** that `.agents/agents/`, `.agents/skills/`, and `.agents/workflows/` resolve cleanly without modifying `.agents/rules/`.
 
 ---
 

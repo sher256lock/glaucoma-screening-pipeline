@@ -83,7 +83,6 @@ If $\text{AUROC}_{\text{val}} \ge 0.85$ but $\text{Sensitivity}_{\text{val}}(t^*
 
 ```text
 glaucoma-screening-pytorch/
-├── .agents/                                # ECC + Antigravity (rules/ untouched)
 ├── configs/
 │   └── model_config.yaml                   # Single source of truth for train/eval/serve
 ├── data/
@@ -104,7 +103,7 @@ glaucoma-screening-pytorch/
 │   │   ├── validate_data.py                # Corrupt scan, ungradable filter, count audit
 │   │   ├── create_splits.py                # Verifies & emits official 400/400/400 splits
 │   │   └── dataset.py                      # PyTorch Dataset class reading config transforms
-│   ├── preprocessing.py                    #Deterministic resize, normalization, optional CLAHE
+│   ├── preprocessing.py                    # Deterministic resize, normalization, optional CLAHE
 │   ├── quality_checks.py                   # OpenCV Laplacian blur & luminance warnings
 │   ├── model.py                            # ResNet-18 factory + phase freeze/unfreeze helpers
 │   ├── train.py                            # Two-phase RTX 4060 AMP training loop
@@ -129,8 +128,12 @@ glaucoma-screening-pytorch/
 │   ├── architecture.md
 │   ├── dataset_protocol.md
 │   ├── evaluation_protocol.md
-│   ├── ecc_antigravity_orchestration.md
-│   └── rejected_patterns.md
+│   ├── rejected_patterns.md
+│   └── CODEMAPS/
+│       ├── architecture.md
+│       ├── backend.md
+│       ├── data.md
+│       └── dependencies.md
 ├── requirements.txt
 ├── .gitignore
 └── README.md

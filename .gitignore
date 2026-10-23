@@ -44,5 +44,6 @@ Thumbs.db
 .vscode/
 .idea/
 
-# ECC / Antigravity local runtime state (keep .agents/ tracked)
-.agents/local/
+# Agentic & workspace customizations (keep local, not tracked in repository)
+.agents/
+AGENTS_*.md
