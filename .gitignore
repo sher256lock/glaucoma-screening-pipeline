@@ -1,0 +1,48 @@
+# Python bytecode & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Model checkpoints & binary weights (track .meta.json only)
+*.pth
+*.pt
+*.onnx
+*.h5
+*.ckpt
+artifacts/models/*
+!artifacts/models/.gitkeep
+!artifacts/models/*.meta.json
+
+# Datasets & patient fundus images (NEVER commit raw or processed data)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*.csv
+data/processed/*.json
+data/processed/splits/
+!data/processed/.gitkeep
+
+# Generated clinical reports & transient PDFs
+*.pdf
+report_*.pdf
+glaucoma_screening_report_*.pdf
+
+# Environment variables & secrets
+.env
+.env.*
+*.secret
+
+# OS & Editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ECC / Antigravity local runtime state (keep .agents/ tracked)
+.agents/local/

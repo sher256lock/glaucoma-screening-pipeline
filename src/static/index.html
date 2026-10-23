@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REFUGE Glaucoma Binary Screening System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0F19;
+      --surface: rgba(22, 27, 44, 0.7);
+      --surface-border: rgba(255, 255, 255, 0.08);
+      --surface-hover: rgba(30, 38, 60, 0.85);
+      --primary: #3B82F6;
+      --primary-glow: rgba(59, 130, 246, 0.25);
+      --accent-glaucoma: #EF4444;
+      --accent-glaucoma-glow: rgba(239, 68, 68, 0.25);
+      --accent-normal: #10B981;
+      --accent-normal-glow: rgba(16, 185, 129, 0.25);
+      --warning: #F59E0B;
+      --warning-glow: rgba(245, 158, 11, 0.15);
+      --text: #F1F5F9;
+      --text-muted: #94A3B8;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 15% 15%, #151C30 0%, var(--bg) 60%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+    }
+
+    header {
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--surface-border);
+      background: rgba(11, 15, 25, 0.8);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--primary), #8B5CF6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+
+    .brand-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: white;
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-text p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .badge-research {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #93C5FD;
+      padding: 0.3rem 0.75rem;
+      border-radius: 9999px;
+    }
+
+    main {
+      flex: 1;
+      max-width: 1380px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 1.25rem;
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #F8FAFC;
+    }
+
+    /* Upload Dropzone */
+    .dropzone {
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-md);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--primary);
+      background: rgba(59, 130, 246, 0.05);
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .dropzone-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 1rem;
+      color: var(--primary);
+      opacity: 0.85;
+    }
+
+    .dropzone h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+
+    .dropzone p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    /* Preview Box */
+    .preview-container {
+      display: none;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--surface-border);
+      position: relative;
+      background: #000;
+      aspect-ratio: 1;
+      max-height: 340px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 0.95rem;
+      border: none;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #2563EB, #1D4ED8);
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 16px var(--primary-glow);
+      transition: all 0.2s ease;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-pdf {
+      width: 100%;
+      padding: 0.85rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.05);
+      color: #E2E8F0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      margin-top: 0.5rem;
+    }
+
+    .btn-pdf:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-pdf:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Results Panel */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 380px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .results-active {
+      display: none;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .badge-result {
+      padding: 0.6rem 1.25rem;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+
+    .badge-glaucoma {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--accent-glaucoma);
+      color: #FCA5A5;
+      box-shadow: 0 0 16px var(--accent-glaucoma-glow);
+    }
+
+    .badge-normal {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--accent-normal);
+      color: #6EE7B7;
+      box-shadow: 0 0 16px var(--accent-normal-glow);
+    }
+
+    /* Score Meter */
+    .score-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+    }
+
+    .score-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.6rem;
+    }
+
+    .score-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .score-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: #F8FAFC;
+    }
+
+    .meter-bar-bg {
+      height: 12px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+
+    .meter-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 0%;
+    }
+
+    .threshold-marker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #FFFFFF;
+      z-index: 10;
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+    }
+
+    .score-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* Metrics Grid */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .meta-item {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem;
+    }
+
+    .meta-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .meta-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #E2E8F0;
+    }
+
+    /* Warnings Banner */
+    .warning-box {
+      background: var(--warning-glow);
+      border: 1px solid var(--warning);
+      color: #FDE68A;
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1rem;
+      font-size: 0.82rem;
+      display: none;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .warning-box strong {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: #FBBF24;
+    }
+
+    /* GradCAM Display */
+    .cam-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .cam-img-wrap {
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--surface-border);
+      background: #000;
+      aspect-ratio: 1;
+      max-height: 380px;
+    }
+
+    .cam-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .cam-caption {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* Footer Disclaimer */
+    footer {
+      border-top: 1px solid var(--surface-border);
+      background: rgba(11, 15, 25, 0.95);
+      padding: 1.5rem 2rem;
+      margin-top: auto;
+    }
+
+    .disclaimer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      font-size: 0.78rem;
+      color: #94A3B8;
+      line-height: 1.6;
+    }
+
+    .disclaimer-container strong {
+      color: #FBBF24;
+      display: block;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>REFUGE Glaucoma Binary Screening</h1>
+        <p>ResNet-18 Deep Learning Prototype &bull; Pure In-Memory Inference</p>
+      </div>
+    </div>
+    <div class="badge-research">Research Prototype</div>
+  </header>
+
+  <main>
+    <!-- Left Column: Image Acquisition -->
+    <section class="card">
+      <div class="card-title">
+        <span>Fundus Photograph Input</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">Memory-Only Processing</span>
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <h3>Select or Drop Retinal Photograph</h3>
+        <p>Supports high-resolution JPEG and PNG fundus images</p>
+        <input type="file" id="fileInput" accept=".jpg,.jpeg,.png">
+      </div>
+
+      <div class="preview-container" id="previewContainer">
+        <img id="previewImage" alt="Fundus preview">
+      </div>
+
+      <button class="btn-submit" id="btnSubmit" disabled>
+        <span class="spinner" id="spinner"></span>
+        <span id="btnText">Analyze Fundus Photograph</span>
+      </button>
+
+      <div style="font-size: 0.74rem; color: var(--text-muted); line-height: 1.4;">
+        &bull; Uploaded pixels are parsed strictly in RAM and never written to disk.<br>
+        &bull; Automated OpenCV heuristics check for Laplacian blur and extreme exposure.
+      </div>
+    </section>
+
+    <!-- Right Column: Results & Interpretability -->
+    <section class="card">
+      <div class="card-title">
+        <span>Clinical Screening Assessment</span>
+        <span id="refIdBadge" style="font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);"></span>
+      </div>
+
+      <div class="empty-state" id="emptyState">
+        <svg style="width: 56px; height: 56px; opacity: 0.35; margin-bottom: 1rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <p>Awaiting retinal photograph upload...</p>
+        <p style="font-size: 0.78rem; margin-top: 0.4rem;">Select an image on the left to compute Glaucoma Suspicion Score</p>
+      </div>
+
+      <div class="results-active" id="resultsActive">
+        <!-- Classification Outcome Badge -->
+        <div>
+          <span class="badge-result" id="outcomeBadge">Glaucoma</span>
+        </div>
+
+        <!-- Suspicion Score Meter -->
+        <div class="score-box">
+          <div class="score-header">
+            <span class="score-title">Glaucoma Suspicion Score</span>
+            <span class="score-number" id="scoreValue">0.0000</span>
+          </div>
+          <div class="meter-bar-bg">
+            <div class="meter-bar-fill" id="meterFill"></div>
+            <div class="threshold-marker" id="threshMarker" title="Decision Threshold"></div>
+          </div>
+          <div class="score-legend">
+            <span>0.0 (Normal Bias)</span>
+            <span id="threshLegend">Threshold: 0.2921</span>
+            <span>1.0 (Suspicion Bias)</span>
+          </div>
+        </div>
+
+        <!-- Quality Warnings Banner -->
+        <div class="warning-box" id="warningBox">
+          <strong>
+            <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            Image Quality Warnings
+          </strong>
+          <ul id="warningList" style="padding-left: 1.25rem; margin-top: 0.2rem;"></ul>
+        </div>
+
+        <!-- Telemetry Details Grid -->
+        <div class="meta-grid">
+          <div class="meta-item">
+            <div class="meta-label">Decision Threshold</div>
+            <div class="meta-value" id="metaThreshold">0.2921</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">CPU Latency</div>
+            <div class="meta-value" id="metaLatency">-- ms</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Model Architecture</div>
+            <div class="meta-value" id="metaModel">ResNet-18</div>
+          </div>
+        </div>
+
+        <!-- GradCAM Overlay Visualization -->
+        <div class="cam-box">
+          <div class="cam-img-wrap">
+            <img id="camImage" alt="Grad-CAM layer4 overlay">
+          </div>
+          <div class="cam-caption">
+            Grad-CAM heatmap overlay (layer4[-1] feature attribution blended at 40% JET over original fundus image)
+          </div>
+        </div>
+
+        <!-- PDF Report Download Button -->
+        <button class="btn-pdf" id="btnDownloadPdf">
+          <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          <span id="btnPdfText">Download Clinical PDF Report</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="disclaimer-container">
+      <strong>Regulatory &amp; Research Prototype Disclaimer:</strong>
+      RESEARCH PROTOTYPE ONLY. Glaucoma Suspicion Score is not a calibrated probability and is not for clinical diagnosis.
+      Model outputs are reported strictly as a "Glaucoma Suspicion Score" derived from a class-weighted binary cross-entropy objective (BCEWithLogitsLoss).
+      Because class weighting shifts the prior log-odds, these scores are not calibrated statistical probabilities and must never be presented as confidence or probability.
+      All screening outputs require formal diagnostic evaluation and clinical confirmation by a qualified ophthalmologist.
+    </div>
+  </footer>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewImage = document.getElementById('previewImage');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const btnText = document.getElementById('btnText');
+    const spinner = document.getElementById('spinner');
+
+    const emptyState = document.getElementById('emptyState');
+    const resultsActive = document.getElementById('resultsActive');
+    const outcomeBadge = document.getElementById('outcomeBadge');
+    const scoreValue = document.getElementById('scoreValue');
+    const meterFill = document.getElementById('meterFill');
+    const threshMarker = document.getElementById('threshMarker');
+    const threshLegend = document.getElementById('threshLegend');
+    const metaThreshold = document.getElementById('metaThreshold');
+    const metaLatency = document.getElementById('metaLatency');
+    const metaModel = document.getElementById('metaModel');
+    const refIdBadge = document.getElementById('refIdBadge');
+    const warningBox = document.getElementById('warningBox');
+    const warningList = document.getElementById('warningList');
+    const camImage = document.getElementById('camImage');
+
+    let selectedFile = null;
+    let frozenThreshold = 0.2921;
+
+    // Fetch initial health/threshold info
+    fetch('/health')
+      .then(res => res.json())
+      .then(data => {
+        if (data.threshold) {
+          frozenThreshold = data.threshold;
+          threshLegend.textContent = `Threshold: ${frozenThreshold.toFixed(4)}`;
+          threshMarker.style.left = `${frozenThreshold * 100}%`;
+          metaThreshold.textContent = frozenThreshold.toFixed(4);
+        }
+      })
+      .catch(() => {});
+
+    // File input and drag & drop handlers
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        handleFileSelection(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        handleFileSelection(fileInput.files[0]);
+      }
+    });
+
+    function handleFileSelection(file) {
+      selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        previewContainer.style.display = 'flex';
+        btnSubmit.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Submit and inference handler
+    btnSubmit.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      btnSubmit.disabled = true;
+      spinner.style.display = 'inline-block';
+      btnText.textContent = 'Analyzing Neural Features...';
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      try {
+        const resp = await fetch('/api/v1/predict', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          throw new Error(errData.detail || `Server returned HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        renderResults(data);
+      } catch (err) {
+        alert(`Screening Failed: ${err.message}`);
+      } finally {
+        btnSubmit.disabled = false;
+        spinner.style.display = 'none';
+        btnText.textContent = 'Analyze Fundus Photograph';
+      }
+    });
+
+    function renderResults(data) {
+      emptyState.style.display = 'none';
+      resultsActive.style.display = 'flex';
+
+      // Badge
+      if (data.predicted_class === 'Glaucoma') {
+        outcomeBadge.className = 'badge-result badge-glaucoma';
+        outcomeBadge.innerHTML = `<svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> Glaucoma Suspicion Flagged`;
+        meterFill.style.background = 'linear-gradient(90deg, #F59E0B, #EF4444)';
+      } else {
+        outcomeBadge.className = 'badge-result badge-normal';
+        outcomeBadge.innerHTML = `<svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Normal / Non-Glaucoma`;
+        meterFill.style.background = 'linear-gradient(90deg, #3B82F6, #10B981)';
+      }
+
+      // Suspicion Score & Progress Bar
+      const score = data.suspicion_score;
+      scoreValue.textContent = score.toFixed(4);
+      meterFill.style.width = `${Math.min(Math.max(score * 100, 0), 100)}%`;
+
+      // Threshold & Markers
+      const thresh = data.threshold_used;
+      threshMarker.style.left = `${thresh * 100}%`;
+      threshLegend.textContent = `Threshold: ${thresh.toFixed(4)}`;
+      metaThreshold.textContent = thresh.toFixed(4);
+
+      // Telemetry
+      metaLatency.textContent = `${data.latency_ms.toFixed(1)} ms`;
+      metaModel.textContent = data.model_version || 'ResNet-18';
+      refIdBadge.textContent = data.reference_id;
+
+      // Quality warnings
+      if (data.quality_warnings && data.quality_warnings.length > 0) {
+        warningList.innerHTML = data.quality_warnings.map(w => `<li>${w}</li>`).join('');
+        warningBox.style.display = 'flex';
+      } else {
+        warningBox.style.display = 'none';
+      }
+
+      // GradCAM
+      if (data.gradcam_overlay_base64) {
+        camImage.src = `data:image/png;base64,${data.gradcam_overlay_base64}`;
+        camImage.parentElement.style.display = 'block';
+      } else {
+        camImage.parentElement.style.display = 'none';
+      }
+    }
+
+    // PDF Download Handler
+    const btnDownloadPdf = document.getElementById('btnDownloadPdf');
+    const btnPdfText = document.getElementById('btnPdfText');
+
+    btnDownloadPdf.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      btnDownloadPdf.disabled = true;
+      btnPdfText.textContent = 'Generating PDF Stream...';
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      try {
+        const resp = await fetch('/api/v1/report', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          throw new Error(errData.detail || `Server returned HTTP ${resp.status}`);
+        }
+
+        const blob = await resp.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        const refId = refIdBadge.textContent || 'report';
+        a.download = `glaucoma_screening_report_${refId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } catch (err) {
+        alert(`PDF Generation Failed: ${err.message}`);
+      } finally {
+        btnDownloadPdf.disabled = false;
+        btnPdfText.textContent = 'Download Clinical PDF Report';
+      }
+    });
+  </script>
+</body>
+</html>

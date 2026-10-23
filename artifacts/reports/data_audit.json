@@ -1,0 +1,28 @@
+{
+  "dataset_name": "REFUGE",
+  "total_raw_images": 1200,
+  "corrupt_files_detected": 0,
+  "corrupt_files_details": [],
+  "ungradable_or_suspect_count": 0,
+  "usable_n": 1200,
+  "splits": {
+    "train": {
+      "total": 400,
+      "normal": 360,
+      "glaucoma": 40
+    },
+    "val": {
+      "total": 400,
+      "normal": 360,
+      "glaucoma": 40
+    },
+    "test": {
+      "total": 400,
+      "normal": 360,
+      "glaucoma": 40
+    }
+  },
+  "train_pos_weight": 9.0,
+  "split_leakage_detected": false,
+  "hash_unique_count": 1200
+}

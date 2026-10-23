@@ -1,0 +1,58 @@
+{
+  "test_n": 400,
+  "test_prevalence_glaucoma": 0.1,
+  "threshold_used": 0.2921,
+  "threshold_procedure": "youden_j_on_val",
+  "metrics": {
+    "auroc": {
+      "value": 0.885,
+      "ci95": [
+        0.829,
+        0.932
+      ]
+    },
+    "sensitivity": {
+      "value": 0.9,
+      "ci95": [
+        0.795,
+        0.977
+      ]
+    },
+    "specificity": {
+      "value": 0.706,
+      "ci95": [
+        0.657,
+        0.754
+      ]
+    },
+    "f1": {
+      "value": 0.396,
+      "ci95": [
+        0.301,
+        0.485
+      ]
+    },
+    "brier_diagnostic_only": 0.128
+  },
+  "confusion_matrix": {
+    "tp": 36,
+    "fp": 106,
+    "tn": 254,
+    "fn": 4
+  },
+  "latency_ms_cpu": {
+    "p50": 30.4,
+    "p95": 34.5,
+    "n_runs": 100,
+    "threads": 14,
+    "device": "cpu",
+    "cpu_model": "13th Gen Intel(R) Core(TM) i7-13650HX"
+  },
+  "limitations": [
+    "Single-dataset training (REFUGE). No external validation cohort.",
+    "REFUGE public release lacks patient-level identifiers; official 400/400/400 split used; inter-eye contamination cannot be ruled out.",
+    "Test N=400 (40 positive cases) yields wide 95% bootstrap confidence intervals.",
+    "Glaucoma Suspicion Score is derived from pos_weight-adjusted BCE and is not a calibrated statistical probability.",
+    "Validation and test labels were derived by ranking vertical Cup-to-Disc Ratio (vCDR) from segmentation ground-truth masks to restore official grand challenge label stratification."
+  ]
+}

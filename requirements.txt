@@ -1,0 +1,34 @@
+# ==============================================================================
+# Glaucoma Binary Screening Pipeline — Dependencies (No Streamlit)
+# Install CUDA 12.1 PyTorch first for RTX 4060 GPU training:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+# ==============================================================================
+
+# Deep Learning & Numerical Computing
+torch>=2.2.0
+torchvision>=0.17.0
+numpy>=1.26.0
+
+# Image Processing & Computer Vision
+opencv-python-headless>=4.9.0.80
+Pillow>=10.2.0
+
+# Evaluation & Metrics
+scikit-learn>=1.4.0
+matplotlib>=3.8.2
+
+# Local Web API & Static UI Serving (Replaces Streamlit)
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.9
+pydantic>=2.6.0
+
+# Configuration, System Hardware & PDF Reporting
+PyYAML>=6.0.1
+psutil>=5.9.8
+reportlab>=4.1.0
+
+# Testing & Verification Harness
+pytest>=8.0.0
+pytest-cov>=4.1.0
+httpx>=0.27.0

@@ -1,0 +1,148 @@
+# ==============================================================================
+# Single Source of Truth Configuration — Glaucoma Binary Screening Pipeline
+# Any divergence between train.py, evaluate.py, cli.py, and api.py is a bug.
+# ==============================================================================
+
+project:
+  name: "glaucoma-resnet18-refuge"
+  version: "1.0.0"
+  score_label: "Glaucoma Suspicion Score"
+  disclaimer: "RESEARCH PROTOTYPE ONLY. Glaucoma Suspicion Score is not a calibrated probability and is not for clinical diagnosis."
+
+model:
+  arch: "resnet18"
+  pretrained_weights: "IMAGENET1K_V1"
+  num_classes: 1
+  head:
+    dropout: 0.3
+    in_features: 512
+    out_features: 1
+
+input:
+  size: 224
+  channels: 3
+  interpolation: "bilinear"
+  normalization:
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+  clahe:
+    enabled: true           # Single-source: normalized across train/val/test/inference
+    clip_limit: 2.0
+    tile_grid_size: [8, 8]
+
+quality_checks:
+  min_width: 64
+  min_height: 64
+  blur_laplacian_min: 50.0  # Below this triggers non-blocking blur warning
+  brightness_min: 40.0      # Below this triggers under-exposure warning
+  brightness_max: 220.0     # Above this triggers over-exposure warning
+
+dataset:
+  name: "REFUGE"
+  raw_dir: "data/raw/refuge"
+  manifest_path: "data/processed/manifest.csv"
+  splits_dir: "data/processed/splits"
+  audit_report_path: "artifacts/reports/data_audit.json"
+  split_protocol: "official_400_400_400"
+  label_map:
+    Glaucoma: 1
+    Normal: 0
+    Non-Glaucoma: 0
+  excluded_labels:
+    - "Ungradable"
+    - "Suspect"
+
+training:
+  seed: 42
+  hardware:
+    device: "cuda"          # Target: NVIDIA GeForce RTX 4060 (8GB VRAM)
+    allow_tf32: true
+    use_amp: true
+    amp_dtype: "float16"
+  dataloader:
+    batch_size: 64
+    num_workers: 2
+    pin_memory: true
+    persistent_workers: false
+  augmentation:
+    random_horizontal_flip: 0.5
+    random_vertical_flip: 0.5
+    random_rotation_degrees: 15.0
+  loss:
+    type: "bce_with_logits"
+    pos_weight: null        # Computed dynamically on train split only: n_neg / n_pos
+  phase_a:
+    description: "Head-only warmup"
+    trainable_modules: ["fc"]
+    optimizer: "adamw"
+    lr: 1.0e-3
+    weight_decay: 1.0e-4
+    epochs: 10
+    early_stop:
+      monitor: "val_auroc"
+      mode: "max"
+      patience: 4
+    gate_min_val_auroc: 0.70
+  phase_b:
+    description: "Selective representation adaptation (layer3 + layer4 + fc)"
+    trainable_modules: ["layer3", "layer4", "fc"]
+    optimizer: "adamw"
+    differential_lr:
+      layer3: 1.0e-5
+      layer4: 3.0e-5
+      fc: 5.0e-5
+    weight_decay: 1.0e-3
+    epochs: 20
+    scheduler:
+      type: "cosine"
+      min_lr: 1.0e-6
+    early_stop:
+      monitor: "val_auroc"
+      mode: "max"
+      patience: 8
+
+checkpoint:
+  selection_rule: "best_val_auroc"
+  weights_path: "artifacts/models/resnet18_refuge.pth"
+  metadata_path: "artifacts/models/resnet18_refuge.meta.json"
+  training_curves_path: "artifacts/reports/training_curves.png"
+
+evaluation:
+  threshold_procedure: "youden_j_on_val"
+  metric_floor:
+    val_auroc_min: 0.85
+    val_sensitivity_min: 0.80
+    allow_sensitivity_priority_shift: true
+  bootstrap:
+    n_resamples: 1000
+    seed: 42
+    confidence_level: 0.95
+  latency_benchmark:
+    warmup_runs: 10
+    timed_runs: 100
+    device: "cpu"
+    batch_size: 1
+    threads: "physical_cores"
+  reports:
+    json_path: "artifacts/reports/evaluation.json"
+    markdown_path: "artifacts/reports/evaluation.md"
+    gradcam_grid_path: "artifacts/reports/gradcam_grid.png"
+
+gradcam:
+  target_layer: "layer4[-1]"
+  upsample_size: 224
+  alpha_overlay: 0.40
+  grid_max_per_category: 4
+
+inference:
+  device: "cpu"             # Target: Local x86_64 CPU (e.g., Intel Core i7-13650HX)
+  batch_size: 1
+  threads: "physical_cores"
+  # Decision threshold is loaded strictly from checkpoint.metadata_path at runtime
+
+server:
+  framework: "fastapi"      # Streamlit is strictly prohibited
+  host: "127.0.0.1"
+  port: 8000
+  max_upload_bytes: 15728640 # 15 MB limit
+  allowed_extensions: [".jpg", ".jpeg", ".png"]
