@@ -34,23 +34,38 @@ All project governance and architectural specifications reside in `docs/`:
 
 ## 3. Environment & Hardware Setup
 
-### 3.1 Python Environment
-Requires Python $3.10$ or $3.11$.
+### 3.1 Python Environment Creation & Activation
+Requires Python $3.10$, $3.11$, $3.12$, or $3.13$.
 
 ```bash
+# 1. Create the virtual environment
 python -m venv .venv
-# Windows PowerShell
+
+# 2. Activate the virtual environment:
+# Windows PowerShell:
 .\.venv\Scripts\Activate.ps1
-# Linux / macOS
+# (Note: If script execution is restricted in PowerShell, run first: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass)
+
+# Linux / macOS:
 source .venv/bin/activate
 ```
 
-### 3.2 PyTorch with CUDA 12.1 (NVIDIA RTX 4060 8GB)
-Install the CUDA-enabled PyTorch wheels to unlock the RTX 4060 Ada Lovelace Tensor Cores (`SM 8.9`):
+> [!TIP]
+> **Windows PowerShell Path Syntax Gotcha**:  
+> In PowerShell, executing a script or binary using a relative path requires the leading `.\` prefix (e.g., `.\.venv\Scripts\python.exe`). Omitting `.\` causes PowerShell's parser to interpret `.venv` as a module name to import, resulting in:  
+> `The module '.venv' could not be loaded. For more information, run 'Import-Module .venv'.`
+
+### 3.2 PyTorch with CUDA (Hardware Acceleration)
+Install CUDA-enabled PyTorch wheels to leverage NVIDIA Tensor Cores (e.g., RTX 4060 Ada Lovelace `SM 8.9`):
 
 ```bash
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+# Windows / Linux with CUDA 12.4
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+
+# Or for CUDA 12.1:
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 ```
+*(On CPU-only systems, standard `pip install torch torchvision` is sufficient).*
 
 ### 3.3 Core Dependencies (FastAPI, OpenCV, Scikit-Learn, ReportLab, Pytest)
 ```bash
@@ -59,34 +74,82 @@ pip install -r requirements.txt
 
 ---
 
-## 4. End-to-End Execution Commands
+## 4. Model Checkpoint & Weights Protocol
 
-### Step 1: Verify Hardware & Test Harness (Phase 0 & 1)
+> [!IMPORTANT]
+> **Model Weights (`.pth`) Are Gitignored:**  
+> The binary weights file `artifacts/models/resnet18_refuge.pth` (~44.8 MB) is intentionally excluded from Git tracking via `.gitignore` to avoid repository bloat. Only architecture metadata ([resnet18_refuge.meta.json](artifacts/models/resnet18_refuge.meta.json)) is committed.  
+> **If you start the FastAPI inference server without this file**, the static web dashboard will load at `http://localhost:8000`, but any screening request (`POST /api/v1/predict`) and `/health` will return `503 Service Unavailable` with:  
+> `Screening Failed: GlaucomaInferenceEngine is not initialized or still starting up.`
+
+Choose one of three pathways to obtain or initialize model weights before inference:
+
+### Option A — Instant Baseline Checkpoint (Recommended for Testing UI, Grad-CAM & Reports)
+To immediately test the entire local web dashboard, live Grad-CAM heatmaps, and PDF report generation without downloading or training on 1,200 REFUGE fundus images, instantiate an ImageNet-pretrained ResNet-18 baseline:
+
 ```bash
-python -c "import torch; print('PyTorch:', torch.__version__, '| CUDA available:', torch.cuda.is_available(), '| Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')"
-pytest -q
+# Windows PowerShell:
+.\.venv\Scripts\python.exe -c "import yaml, torch; from src.model import build_model; cfg = yaml.safe_load(open('configs/model_config.yaml')); model = build_model(cfg); torch.save(model.state_dict(), 'artifacts/models/resnet18_refuge.pth'); print('Saved baseline checkpoint to artifacts/models/resnet18_refuge.pth')"
+
+# Linux / macOS:
+.venv/bin/python -c "import yaml, torch; from src.model import build_model; cfg = yaml.safe_load(open('configs/model_config.yaml')); model = build_model(cfg); torch.save(model.state_dict(), 'artifacts/models/resnet18_refuge.pth'); print('Saved baseline checkpoint to artifacts/models/resnet18_refuge.pth')"
 ```
 
-### Step 2: REFUGE Manifest Audit & Split Generation (Phase 2 Gate)
-*Must be completed and recorded in `docs/dataset_protocol.md` before training.*
+### Option B — Deploy an Existing Trained Checkpoint
+If you already possess a trained `resnet18_refuge.pth` file (e.g., from a shared release or backup), place it directly into:
+```text
+artifacts/models/resnet18_refuge.pth
+```
+
+### Option C — Full Retraining on REFUGE (GPU Accelerated)
+To reproduce the full model from scratch on the official REFUGE dataset (400 train / 400 val / 400 test split):
 ```bash
+# 1. Place raw REFUGE images in data/raw/refuge/ and generate audited splits:
 python -m src.data.load_refuge --raw-dir data/raw/refuge --output data/processed/manifest.csv
 python -m src.data.validate_data --manifest data/processed/manifest.csv --report artifacts/reports/data_audit.json
 python -m src.data.create_splits --manifest data/processed/manifest.csv --output-dir data/processed/splits
-```
 
-### Step 3: Two-Phase Model Training on RTX 4060 (Phase 3a & 3b)
-```bash
+# 2. Execute Two-Phase Training on RTX 4060 (Phase A: Warmup, Phase B: Selective Fine-Tuning):
 python -m src.train --config configs/model_config.yaml
-```
 
-### Step 4: Held-Out Evaluation, Threshold Freezing & Grad-CAM Grid (Phase 4)
-```bash
+# 3. Evaluate held-out test cohort, freeze Youden's J threshold, and generate Grad-CAM grid:
 python -m src.evaluate --config configs/model_config.yaml
 ```
 
-### Step 5: Local CPU Inference & Clinical Deployment (Phase 5 & 6 — No Streamlit)
-**Option A — Headless CLI Inference (Single Image & Batch with Grad-CAM & PDF Report):**
+---
+
+## 5. End-to-End Execution Commands
+
+### Step 1: Verify Hardware & Test Harness (Phase 0 & 1)
+```bash
+# Check PyTorch device and CUDA availability:
+python -c "import torch; print('PyTorch:', torch.__version__, '| CUDA available:', torch.cuda.is_available(), '| Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')"
+
+# Run full test suite (55 unit tests):
+pytest -q
+```
+
+### Step 2: Local CPU Inference & Clinical Deployment (Phase 5 & 6 — No Streamlit)
+
+#### Surface 1 — Local FastAPI REST Service + Zero-Build HTML5 Clinical Dashboard:
+```bash
+# With activated virtual environment:
+uvicorn src.api:app --host 0.0.0.0 --port 8000
+
+# Direct invocation in Windows PowerShell (without activating .venv):
+.\.venv\Scripts\python.exe -m uvicorn src.api:app --host 0.0.0.0 --port 8000
+
+# Direct invocation in Linux / macOS (without activating .venv):
+.venv/bin/python -m uvicorn src.api:app --host 0.0.0.0 --port 8000
+```
+- **Web Clinical Dashboard**: Open `http://localhost:8000` in any browser to access the interactive screening dashboard with in-memory upload, score meter, Grad-CAM viewer, and instant PDF download.
+- **REST Endpoints**:
+  - `POST /api/v1/predict`: In-memory screening returning Glaucoma Suspicion Score, threshold, and Base64 Grad-CAM overlay.
+  - `POST /api/v1/report`: In-memory generation of single-page clinical PDF report.
+  - `GET /api/v1/evaluation`: Official held-out test evaluation report and bootstrap 95% CIs.
+  - `GET /health`: Engine status, CPU threads, device, and frozen threshold.
+
+#### Surface 2 — Headless CLI Inference (Single Image & Batch with Grad-CAM & PDF Report):
 ```bash
 # Single image with clinical PDF report:
 python -m src.cli --file path/to/fundus.jpg --pdf
@@ -98,23 +161,8 @@ python -m src.cli --file path/to/fundus.jpg --save-gradcam artifacts/reports/sam
 python -m src.cli --dir path/to/fundus_dir/
 ```
 
-**Option B — Local FastAPI REST Service + Zero-Build HTML5 Clinical Dashboard:**
-```bash
-# With activated virtual environment:
-uvicorn src.api:app --host 0.0.0.0 --port 8000
-
-# Direct invocation in Windows PowerShell (if virtualenv is not activated):
-.venv\Scripts\python.exe -m uvicorn src.api:app --host 0.0.0.0 --port 8000
-```
-- Web Clinical UI: Open `http://localhost:8000` in any browser to access the interactive screening dashboard with in-memory upload, score meter, Grad-CAM viewer, and instant PDF download.
-- REST Endpoints:
-  - `POST /api/v1/predict`: In-memory screening returning Glaucoma Suspicion Score, threshold, and Base64 Grad-CAM overlay.
-  - `POST /api/v1/report`: In-memory generation of single-page clinical PDF report.
-  - `GET /api/v1/evaluation`: Official held-out test evaluation report and bootstrap 95% CIs.
-  - `GET /health`: Engine status, CPU threads, device, and frozen threshold.
-
 ---
 
-## 5. Mandatory Regulatory & Statistical Disclaimer
+## 6. Mandatory Regulatory & Statistical Disclaimer
 
 This system is an **educational and research prototype**. Model outputs are reported strictly as a **"Glaucoma Suspicion Score"** derived from a class-weighted binary cross-entropy objective (`BCEWithLogitsLoss`). Because class weighting shifts the prior log-odds, these scores **are not calibrated statistical probabilities** and must never be presented as "confidence" or "probability." All outputs require review by a qualified ophthalmologist.
