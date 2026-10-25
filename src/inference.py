@@ -73,11 +73,28 @@ class GlaucomaInferenceEngine:
 
         # Determine and validate checkpoint paths
         ckpt_cfg = self.config.get("checkpoint", {})
+        has_custom_weights = weights_path is not None
         self.weights_path = Path(weights_path or ckpt_cfg.get("weights_path", "artifacts/models/resnet18_refuge.pth")).resolve()
         self.metadata_path = Path(metadata_path or ckpt_cfg.get("metadata_path", "artifacts/models/resnet18_refuge.meta.json")).resolve()
 
         if not self.weights_path.exists():
-            raise ModelCheckpointError(f"Model weights file not found on disk: {self.weights_path}")
+            if not has_custom_weights and ckpt_cfg.get("auto_download", False):
+                try:
+                    from src.download_weights import ensure_weights
+                    logger.info("Weights missing locally; auto_download is enabled. Attempting to ensure weights...")
+                    ensure_weights(
+                        weights_path=self.weights_path,
+                        config_path=self.config_path,
+                        fallback_to_baseline=True,
+                    )
+                except Exception as dl_err:
+                    logger.warning(f"Failed to auto-download model weights: {dl_err}")
+
+        if not self.weights_path.exists():
+            raise ModelCheckpointError(
+                f"Model weights file not found on disk: {self.weights_path}. "
+                "Run 'python -m src.download_weights' or generate baseline weights."
+            )
         if not self.metadata_path.exists():
             raise ModelCheckpointError(f"Metadata contract file not found on disk: {self.metadata_path}")
 

@@ -74,34 +74,38 @@ pip install -r requirements.txt
 
 ---
 
-## 4. Model Checkpoint & Weights Protocol
+## 4. Model Checkpoint & Automated Weights Protocol
 
-> [!IMPORTANT]
-> **Model Weights (`.pth`) Are Gitignored:**  
-> The binary weights file `artifacts/models/resnet18_refuge.pth` (~44.8 MB) is intentionally excluded from Git tracking via `.gitignore` to avoid repository bloat. Only architecture metadata ([resnet18_refuge.meta.json](artifacts/models/resnet18_refuge.meta.json)) is committed.  
-> **If you start the FastAPI inference server without this file**, the static web dashboard will load at `http://localhost:8000`, but any screening request (`POST /api/v1/predict`) and `/health` will return `503 Service Unavailable` with:  
-> `Screening Failed: GlaucomaInferenceEngine is not initialized or still starting up.`
+> [!NOTE]
+> **Zero-Bloat Automated Weight Acquisition**:  
+> Binary weights (`artifacts/models/resnet18_refuge.pth`, ~44.8 MB) are excluded from Git via `.gitignore` to keep the repository lightweight.  
+> `GlaucomaInferenceEngine` includes an **automatic fetcher**: on startup, if weights are missing, it downloads them from the configured GitHub Release asset (`checkpoint.download_url` in `configs/model_config.yaml`), verifies the SHA-256 checksum, and performs an atomic save.
 
-Choose one of three pathways to obtain or initialize model weights before inference:
+You can also acquire or manage model weights manually via any of the following methods:
 
-### Option A — Instant Baseline Checkpoint (Recommended for Testing UI, Grad-CAM & Reports)
-To immediately test the entire local web dashboard, live Grad-CAM heatmaps, and PDF report generation without downloading or training on 1,200 REFUGE fundus images, instantiate an ImageNet-pretrained ResNet-18 baseline:
-
+### Option A — Automated CLI Fetcher & Integrity Verifier (Recommended)
+Download the verified release checkpoint directly via the CLI utility:
 ```bash
-# Windows PowerShell:
-.\.venv\Scripts\python.exe -c "import yaml, torch; from src.model import build_model; cfg = yaml.safe_load(open('configs/model_config.yaml')); model = build_model(cfg); torch.save(model.state_dict(), 'artifacts/models/resnet18_refuge.pth'); print('Saved baseline checkpoint to artifacts/models/resnet18_refuge.pth')"
+# Automated download and SHA-256 checksum verification:
+python -m src.download_weights
 
-# Linux / macOS:
-.venv/bin/python -c "import yaml, torch; from src.model import build_model; cfg = yaml.safe_load(open('configs/model_config.yaml')); model = build_model(cfg); torch.save(model.state_dict(), 'artifacts/models/resnet18_refuge.pth'); print('Saved baseline checkpoint to artifacts/models/resnet18_refuge.pth')"
+# Force re-download:
+python -m src.download_weights --force
 ```
 
-### Option B — Deploy an Existing Trained Checkpoint
-If you already possess a trained `resnet18_refuge.pth` file (e.g., from a shared release or backup), place it directly into:
+### Option B — Instant Offline Baseline Initialization (Zero-Download UI Testing)
+To test the web UI, Grad-CAM overlays, and PDF reporting without downloading or training on full weights:
+```bash
+python -m src.download_weights --init-baseline
+```
+
+### Option C — Deploy an Existing Trained Checkpoint
+If you possess a local `resnet18_refuge.pth` file, place it directly into:
 ```text
 artifacts/models/resnet18_refuge.pth
 ```
 
-### Option C — Full Retraining on REFUGE (GPU Accelerated)
+### Option D — Full Retraining on REFUGE (GPU Accelerated)
 To reproduce the full model from scratch on the official REFUGE dataset (400 train / 400 val / 400 test split):
 ```bash
 # 1. Place raw REFUGE images in data/raw/refuge/ and generate audited splits:
