@@ -2,12 +2,12 @@
 
 # Glaucoma Binary Screening Pipeline — PyTorch ResNet-18 / REFUGE
 
-[![Python Version](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.6%2B%20%7C%20CUDA%2012.4-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/sher256lock/glaucoma-screening-pipeline)
-[![Tests](https://img.shields.io/badge/Tests-61%20Passed-success.svg)](tests/)
+[![Python Version](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.6%2B%20%7C%20CUDA%2012.4-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-267CB9?style=flat-square)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-555555?style=flat-square)](https://github.com/sher256lock/glaucoma-screening-pipeline)
+[![Tests](https://img.shields.io/badge/Tests-61%20Passed-2ea44f?style=flat-square&logo=pytest&logoColor=white)](tests/)
 
 <p align="center">
   <strong>Research and educational prototype for binary glaucoma screening from retinal fundus photographs.</strong><br>
@@ -15,11 +15,12 @@
 </p>
 
 <p align="center">
-  <a href="#-getting-started">Quickstart</a> •
-  <a href="#-usage">Usage Modes</a> •
-  <a href="#-architecture--specifications">Architecture</a> •
-  <a href="#-documentation-index">Documentation</a> •
-  <a href="#-mandatory-regulatory--statistical-disclaimer">Regulatory Disclaimer</a>
+  <a href="#about-the-project">About</a> •
+  <a href="#getting-started">Quickstart</a> •
+  <a href="#usage">Usage Modes</a> •
+  <a href="#architecture--specifications">Architecture</a> •
+  <a href="#documentation-index">Documentation</a> •
+  <a href="#mandatory-regulatory--statistical-disclaimer">Disclaimer</a>
 </p>
 
 </div>
@@ -32,25 +33,25 @@
 
 ## 📋 Table of Contents
 
-- [About the Project](#-about-the-project)
+- [About the Project](#about-the-project)
   - [Overview & Clinical Motivation](#overview--clinical-motivation)
   - [Key Architectural Features](#key-architectural-features)
   - [Built With](#built-with)
-- [Getting Started](#-getting-started)
+- [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Automated Model Weights Protocol](#automated-model-weights-protocol)
-- [Usage](#-usage)
+- [Usage](#usage)
   - [Surface 1: Interactive Web Dashboard](#surface-1-interactive-web-dashboard)
   - [Surface 2: Headless CLI Screening](#surface-2-headless-cli-screening)
   - [Surface 3: Two-Phase Training & Evaluation Pipeline](#surface-3-two-phase-training--evaluation-pipeline)
-- [Architecture & Specifications](#-architecture--specifications)
+- [Architecture & Specifications](#architecture--specifications)
   - [Executive Specification Matrix](#executive-specification-matrix)
   - [Visual Explainability (Grad-CAM)](#visual-explainability-grad-cam)
-- [Documentation Index](#-documentation-index)
-- [Contributing](#-contributing)
-- [License](#-license)
-- [Mandatory Regulatory & Statistical Disclaimer](#-mandatory-regulatory--statistical-disclaimer)
+- [Documentation Index](#documentation-index)
+- [Contributing](#contributing)
+- [License](#license)
+- [Mandatory Regulatory & Statistical Disclaimer](#mandatory-regulatory--statistical-disclaimer)
 
 ---
 
@@ -58,15 +59,15 @@
 
 Glaucoma is one of the leading causes of irreversible visual impairment worldwide, frequently dubbed the "silent thief of sight" due to its asymptomatic progression in early stages. Population-scale screening using digital fundus photography offers a vital intervention window, yet clinical diagnostic workflows face severe specialist shortages and high inter-observer variability.
 
-This repository provides an **end-to-end, reproducible deep learning screening pipeline** developed on the gold-standard **REFUGE (Retinal Fundus Glaucoma Challenge)** dataset ($400$ train / $400$ validation / $400$ test split).
+This repository provides an **end-to-end, reproducible deep learning screening pipeline** developed on the gold-standard **REFUGE (Retinal Fundus Glaucoma Challenge)** dataset (400 train / 400 validation / 400 test split).
 
 ### Key Architectural Features
 
-* **Calibrated Class Imbalance Handling**: Trains with dynamically weighted Binary Cross-Entropy (`pos_weight = 9.0`) to balance the severe $9:1$ negative-to-positive class skew inherent to screening populations without artificial synthetic oversampling.
+* **Calibrated Class Imbalance Handling**: Trains with dynamically weighted Binary Cross-Entropy (`pos_weight = 9.0`) to balance the severe 9:1 negative-to-positive class skew inherent to screening populations without artificial synthetic oversampling.
 * **Two-Phase Transfer Learning Schedule**: Protects pretrained visual features via a strict Phase A (`fc` head warmup) followed by Phase B (differential learning rate adaptation on `layer3`, `layer4`, and `fc`).
-* **Youden's $J$ Threshold Freezing**: Eliminates arbitrary $0.50$ decision boundaries by calibrating and freezing optimal sensitivity/specificity operating thresholds on the held-out validation cohort (`threshold = 0.2921`).
+* **Youden's J Threshold Freezing**: Eliminates arbitrary 0.50 decision boundaries by calibrating and freezing optimal sensitivity/specificity operating thresholds on the held-out validation cohort (`threshold = 0.2921`).
 * **Visual Explainability via Grad-CAM**: Automatically computes gradient-weighted class activation mappings against `model.layer4[-1]`, overlaying a bilinear heatmap directly over the optic nerve head and neuroretinal rim.
-* **Deterministic CPU Inference Engine**: Enforces single-image batching ($\text{batch\_size} = 1$), intra-op CPU thread pinning, and strict in-memory PHI lifecycle management (zero disk persistence of patient uploads).
+* **Deterministic CPU Inference Engine**: Enforces single-image batching (`batch_size = 1`), intra-op CPU thread pinning, and strict in-memory PHI lifecycle management (zero disk persistence of patient uploads).
 * **Zero-Build Local Web Surface**: Replaces heavyweight web runtimes with a responsive HTML5/Vanilla JS clinical dashboard served via FastAPI and Uvicorn. *(Streamlit is strictly banned per architectural constraints).*
 
 ### Built With
@@ -76,7 +77,7 @@ This repository provides an **end-to-end, reproducible deep learning screening p
 * [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) — High-performance asynchronous REST API backend
 * [![Uvicorn](https://img.shields.io/badge/Uvicorn-499848?style=flat-square&logo=gunicorn&logoColor=white)](https://www.uvicorn.org/) — Lightning-fast ASGI production web server
 * [![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?style=flat-square&logo=opencv&logoColor=white)](https://opencv.org/) — CLAHE contrast enhancement & Laplacian blur heuristics
-* [![Scikit-Learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)](https://scikit-learn.org/) — ROC/PR curves, Youden's $J$, and bootstrap statistical metrics
+* [![Scikit-Learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)](https://scikit-learn.org/) — ROC/PR curves, Youden's J, and bootstrap statistical metrics
 * [![ReportLab](https://img.shields.io/badge/ReportLab-C8372D?style=flat-square&logo=adobeacrobatreader&logoColor=white)](https://www.reportlab.com/) — Single-page vector clinical PDF report generation
 * [![Pytest](https://img.shields.io/badge/pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white)](https://pytest.org/) — Automated 61-test verification harness
 
@@ -88,7 +89,7 @@ Follow these steps to set up and run the screening pipeline locally from a fresh
 
 ### Prerequisites
 
-* **Python**: $3.10$, $3.11$, $3.12$, or $3.13$.
+* **Python**: 3.10, 3.11, 3.12, or 3.13.
 * **Training Hardware (Optional)**: NVIDIA GPU with Tensor Cores (e.g., RTX 4060 8GB, CUDA 12.1/12.4).
 * **Inference Hardware**: Standard x86_64 CPU (Intel Core / AMD Ryzen).
 
@@ -213,7 +214,7 @@ python -m src.cli --dir path/to/fundus_dir/
 
 ### Surface 3: Two-Phase Training & Evaluation Pipeline
 
-To reproduce model weights from scratch using the official REFUGE dataset ($400 / 400 / 400$ split):
+To reproduce model weights from scratch using the official REFUGE dataset (400 / 400 / 400 split):
 
 ```bash
 # Step 1: Verify hardware acceleration and run 61-test unit harness:
@@ -241,24 +242,28 @@ python -m src.evaluate --config configs/model_config.yaml
 | Dimension | Specification | Governance Enforcement |
 | :--- | :--- | :--- |
 | **Backbone Architecture** | `torchvision.models.resnet18(weights=IMAGENET1K_V1)` | Fixed backbone. Over-parameterized alternatives (ResNet-50, ViT) strictly forbidden. |
-| **Classification Head** | `nn.Sequential(nn.Dropout(p=0.3), nn.Linear(512, 1))` | Single-layer linear projection to prevent overfitting on $N=400$ positive-sparse data. |
-| **Dataset & Split** | **REFUGE Challenge** ($400$ train / $400$ val / $400$ test) | Official challenge split. Excludes ungradable and suspect labels. |
-| **Loss Function** | `BCEWithLogitsLoss(pos_weight=9.0)` | Dynamically computed on train split ($N_{\text{neg}} / N_{\text{pos}}$) to penalize missed glaucoma. |
-| **Training Schedule** | **Phase A** (`fc` warmup) $\rightarrow$ **Phase B** (`layer3` + `layer4` + `fc`) | Protects pretrained early filters from disruptive initial gradient surges. |
-| **Operating Threshold** | **Youden's $J = 0.2921$** (calibrated on validation split) | Sensitivity floor $\ge 0.80$; specificity $\approx 0.864$. Never hardcoded to $0.50$. |
-| **Inference Hardware** | Local **x86_64 CPU** (`batch_size = 1`, thread-pinned) | Single-image latency $\le 150\text{ ms}$; deterministic intra-op parallelism. |
+| **Classification Head** | `nn.Sequential(nn.Dropout(p=0.3), nn.Linear(512, 1))` | Single-layer linear projection to prevent overfitting on *N* = 400 positive-sparse data. |
+| **Dataset & Split** | **REFUGE Challenge** (400 train / 400 val / 400 test) | Official challenge split. Excludes ungradable and suspect labels. |
+| **Loss Function** | `BCEWithLogitsLoss(pos_weight=9.0)` | Dynamically computed on train split (*N*~neg~ / *N*~pos~) to balance class skew. |
+| **Training Schedule** | **Phase A** (`fc` warmup) → **Phase B** (`layer3` + `layer4` + `fc`) | Protects pretrained early filters from disruptive initial gradient surges. |
+| **Operating Threshold** | **Youden's J = 0.2921** (calibrated on validation split) | Sensitivity floor ≥ 0.80; specificity ≈ 0.864. Never hardcoded to 0.50. |
+| **Inference Hardware** | Local **x86_64 CPU** (`batch_size = 1`, thread-pinned) | Single-image latency ≤ 150 ms; deterministic intra-op parallelism. |
 | **Web Service Surface** | **FastAPI + Uvicorn** + Static Vanilla HTML5/JS UI | Pure in-memory streaming; Streamlit is strictly prohibited. |
 | **Explainability** | **Grad-CAM (`model.layer4[-1]`)** | Bilinear heatmap interpolation overlaid onto original fundus photograph. |
 
 ### Visual Explainability (Grad-CAM)
 
-The pipeline integrates Gradient-weighted Class Activation Mapping (Grad-CAM) at the final convolutional layer:
-$$\mathbf{A}^k = \text{model.layer4}[-1]$$
+The pipeline integrates Gradient-weighted Class Activation Mapping (Grad-CAM) at the final convolutional feature layer (`model.layer4[-1]`).
 
-Importance weights $\alpha_k$ are derived by backpropagating the raw target logit with respect to feature activation maps:
+Importance weights $\alpha_k$ are derived by global average pooling the gradients of the target class logit $y$ with respect to feature activation maps $A^k$:
+
 $$\alpha_k = \frac{1}{Z} \sum_{i} \sum_{j} \frac{\partial y}{\partial A_{i,j}^k}$$
 
-A rectified combination yields the localization map, which is bilinearly upsampled to $224 \times 224$ and blended as a JET color overlay over the original fundus photograph, validating that the network focuses attention on the **optic disc excavation and neuroretinal rim thinning** rather than peripheral retinal artifacts.
+A rectified linear combination yields the 2D coarse localization map:
+
+$$L_{\text{Grad-CAM}} = \text{ReLU}\left( \sum_{k} \alpha_k A^k \right)$$
+
+This activation map is bilinearly upsampled to 224 × 224 and blended as a JET color overlay over the original fundus photograph, confirming that network attention focuses on the **optic disc excavation and neuroretinal rim thinning** rather than peripheral retinal artifacts.
 
 ---
 
@@ -269,7 +274,7 @@ All project governance, data protocols, and architectural specifications reside 
 1. **[`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md)** — Canonical project specification, hard constraints, two-phase training schedules, and phase gates.
 2. **[`docs/architecture.md`](docs/architecture.md)** — Data flow diagrams, module boundaries, JSON/Pydantic schemas, and in-memory PHI lifecycle.
 3. **[`docs/dataset_protocol.md`](docs/dataset_protocol.md)** — REFUGE dataset acquisition, ungradable exclusion rules, and patient-ID leakage disclosures.
-4. **[`docs/evaluation_protocol.md`](docs/evaluation_protocol.md)** — Statistical metrics, Youden's $J$ threshold freezing, $1,000$-resample bootstrap 95% CIs, and Grad-CAM error grids.
+4. **[`docs/evaluation_protocol.md`](docs/evaluation_protocol.md)** — Statistical metrics, Youden's J threshold freezing, 1,000-resample bootstrap 95% CIs, and Grad-CAM error grids.
 5. **[`docs/CODEMAPS/`](docs/CODEMAPS/)** — Token-lean architecture, data pipeline, and backend service codemaps.
 6. **[`docs/rejected_patterns.md`](docs/rejected_patterns.md)** — Explicit architectural anti-patterns (including bans on Streamlit, ResNet-50, and uncalibrated probability claims).
 
@@ -308,4 +313,4 @@ Distributed under the **Apache License 2.0**. See [`LICENSE`](LICENSE) for compl
 
 This system is an **educational and research prototype**. Model outputs are reported strictly as a **"Glaucoma Suspicion Score"** derived from a class-weighted binary cross-entropy objective (`BCEWithLogitsLoss`). 
 
-Because class weighting shifts the prior log-odds by $+\ln(w_{\text{pos}})$, these continuous output values **are not calibrated statistical probabilities** and must never be interpreted, marketed, or presented as "confidence" or "probability." All outputs require formal diagnostic evaluation and clinical confirmation by a qualified ophthalmologist.
+Because class weighting shifts the prior log-odds by `+ln(w_pos)`, these continuous output values **are not calibrated statistical probabilities** and must never be interpreted, marketed, or presented as "confidence" or "probability." All outputs require formal diagnostic evaluation and clinical confirmation by a qualified ophthalmologist.
